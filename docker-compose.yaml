@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  prestashop:
+    image: prestashop/prestashop:8.0
+    container_name: my-prestashop
+    ports:
+      - "8080:80"
+    environment:
+      - PS_DEV_MODE=false
+      - PS_INSTALL_AUTO=1
+      - PS_DOMAIN=localhost:8080
+      - PS_FOLDER_INSTALL=install
+      - PS_FOLDER_ADMIN=admin
+      - ADMIN_MAIL=admin@example.com
+      - ADMIN_PASSWD=prestashop_demo
+      - DB_SERVER=mysql
+      - DB_NAME=prestashop
+      - DB_USER=prestashop
+      - DB_PASSWD=prestashop
+    depends_on:
+      - mysql
+    
+  mysql:
+    image: mysql:8.0
+    container_name: prestashop-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=prestashop
+      - MYSQL_USER=prestashop
+      - MYSQL_PASSWORD=prestashop
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
