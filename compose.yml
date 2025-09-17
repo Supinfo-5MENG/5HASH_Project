@@ -1,0 +1,25 @@
+services:
+  prestashop:
+    image: prestashop/prestashop:latest
+    container_name: prestashop_demo
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PS_INSTALL_AUTO: 1
+      PS_DEMO_MODE: 1
+      DB_SERVER: db
+      DB_NAME: prestashop
+      DB_USER: root
+      DB_PASSWD: root
+      PS_DOMAIN: localhost:8080
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    container_name: prestashop_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: prestashop
