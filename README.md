@@ -424,7 +424,8 @@ http://prestashop-alb-123456789.eu-west-3.elb.amazonaws.com
 
 Ouvrez cette URL dans votre navigateur pour accéder à PrestaShop.
 
-> **Note** : Le premier démarrage peut prendre 5-10 minutes pour que PrestaShop s'installe complètement.
+> [!NOTE]
+> Le premier démarrage peut prendre 5-10 minutes pour que PrestaShop s'installe complètement.
 
 ### 7. Détruire l'infrastructure
 
@@ -481,7 +482,9 @@ Les coûts varient selon la région et l'utilisation. Voici une estimation mensu
 - **EFS** : ~0.30 USD/GB stocké + coûts d'accès
 - **Transfert de données** : Variable
 
-**Total estimé** : ~90-110 USD/mois (hors stockage EFS et transfert de données)
+> [!NOTE]
+> Total estimé : ~90-110 USD/mois (hors stockage EFS et transfert de données)
 
-> **Important** : N'oubliez pas de détruire l'infrastructure avec `terraform destroy` si vous ne l'utilisez plus pour éviter des frais inutiles.
+> [!IMPORTANT]
+> N'oubliez pas de détruire l'infrastructure avec `terraform destroy` si vous ne l'utilisez plus pour éviter des frais inutiles.
 
