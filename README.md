@@ -464,6 +464,111 @@ terraform destroy
 - Configure les rôles IAM
 - Configure CloudWatch Logs
 
+## Schéma d'architecture
+
+```mermaid
+graph TB
+    subgraph Internet
+        Users[Utilisateurs]
+    end
+
+    subgraph AWS["AWS Cloud - Region eu-west-3"]
+        subgraph VPC["VPC par défaut"]
+            
+            subgraph PublicSubnets["Subnets Publics"]
+                ALB[("Application Load Balancer<br/>Port 80")]
+            end
+            
+            subgraph PrivateSubnets["Subnets"]
+                subgraph AZ1["Availability Zone 1"]
+                    ECS1["ECS Fargate Task 1<br/>PrestaShop Container<br/>CPU: 512, RAM: 1024"]
+                    EFS1["EFS Mount Target 1"]
+                    
+                end
+                
+                subgraph AZ2["Availability Zone 2"]
+                    ECS2["ECS Fargate Task 2<br/>PrestaShop Container<br/>CPU: 512, RAM: 1024"]
+                    EFS2["EFS Mount Target 2"]
+                end
+                
+                subgraph Storage["Stockage Partagé"]
+                    EFS["EFS File System<br/>Encrypted<br/>/var/www/html"]
+                end
+                
+                subgraph Database["Base de données"]
+                    RDS["RDS MySQL 8.0<br/>db.t3.micro<br/>20GB Encrypted<br/>Multi-AZ capable"]
+                end
+            end
+            
+            subgraph SecurityGroups["Security Groups"]
+                SG_ALB["SG-ALB<br/>IN: 80 from 0.0.0.0/0<br/>OUT: All"]
+                SG_ECS["SG-ECS<br/>IN: 80 from ALB<br/>IN: 2049 self<br/>OUT: All"]
+                SG_RDS["SG-RDS<br/>IN: 3306 from ECS<br/>OUT: All"]
+                SG_EFS["SG-EFS<br/>IN: 2049 from ECS<br/>OUT: All"]
+            end
+            
+            subgraph Monitoring["Monitoring"]
+                CW["CloudWatch Logs<br/>/ecs/prestashop<br/>Retention: 7 days"]
+                CI["Container Insights<br/>Enabled"]
+            end
+            
+            subgraph IAM["IAM"]
+                ROLE["ECS Task Execution Role<br/>AmazonECSTaskExecutionRolePolicy"]
+            end
+        end
+    end
+
+    %% Connexions utilisateurs
+    Users -->|HTTP:80| ALB
+    
+    %% Connexions ALB vers ECS
+    ALB -->|Target Group| ECS1
+    ALB -->|Target Group| ECS2
+    
+    %% Connexions ECS vers RDS
+    ECS1 -->|MySQL:3306| RDS
+    ECS2 -->|MySQL:3306| RDS
+    
+    %% Connexions ECS vers EFS
+    ECS1 -->|NFS:2049| EFS1
+    ECS2 -->|NFS:2049| EFS2
+    EFS1 -.->|Sync| EFS
+    EFS2 -.->|Sync| EFS
+    
+    %% Connexions Logs
+    ECS1 -.->|Logs| CW
+    ECS2 -.->|Logs| CW
+    
+    %% Security Groups
+    SG_ALB -.->|Protège| ALB
+    SG_ECS -.->|Protège| ECS1
+    SG_ECS -.->|Protège| ECS2
+    SG_RDS -.->|Protège| RDS
+    SG_EFS -.->|Protège| EFS1
+    SG_EFS -.->|Protège| EFS2
+    
+    %% IAM
+    ROLE -.->|Assume Role| ECS1
+    ROLE -.->|Assume Role| ECS2
+
+    %% Styles
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef compute fill:#ED7100,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef storage fill:#7AA116,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef database fill:#3B48CC,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef security fill:#DD344C,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef network fill:#8C4FFF,stroke:#232F3E,stroke-width:2px,color:#fff
+    classDef monitoring fill:#759C3E,stroke:#232F3E,stroke-width:2px,color:#fff
+    
+    class AWS aws
+    class ECS1,ECS2 compute
+    class EFS,EFS1,EFS2 storage
+    class RDS database
+    class SG_ALB,SG_ECS,SG_RDS,SG_EFS,ROLE security
+    class ALB network
+    class CW,CI monitoring
+```
+
 ## Sécurité
 
 - Tous les Security Groups suivent le principe du moindre privilège
