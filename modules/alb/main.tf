@@ -2,12 +2,12 @@
 resource "aws_lb" "main" {
   name               = "${var.project_name}-alb"
   load_balancer_type = "application"
-  subnets            = data.aws_subnets.default.ids
-  security_groups    = [aws_security_group.alb.id]
+  subnets            = var.subnet_ids
+  security_groups    = [var.security_group_id]
 
   enable_deletion_protection = false
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-alb"
   })
 }
@@ -17,7 +17,7 @@ resource "aws_lb_target_group" "main" {
   name        = "${var.project_name}-tg"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
   health_check {
@@ -31,7 +31,7 @@ resource "aws_lb_target_group" "main" {
     protocol            = "HTTP"
   }
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-target-group"
   })
 }
@@ -47,7 +47,7 @@ resource "aws_lb_listener" "main" {
     target_group_arn = aws_lb_target_group.main.arn
   }
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-listener"
   })
 }
