@@ -7,7 +7,7 @@ resource "aws_ecs_cluster" "main" {
     value = "enabled"
   }
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-cluster"
   })
 }
@@ -17,7 +17,7 @@ resource "aws_cloudwatch_log_group" "main" {
   name              = "/ecs/${var.project_name}"
   retention_in_days = var.log_retention_days
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-log-group"
   })
 }
@@ -39,7 +39,7 @@ resource "aws_iam_role" "ecs_task_execution" {
     ]
   })
 
-  tags = local.common_tags
+  tags = var.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "main" {
   volume {
     name = "prestashop-data"
     efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.main.id
+      file_system_id     = var.efs_id
       transit_encryption = "ENABLED"
     }
   }
@@ -78,14 +78,14 @@ resource "aws_ecs_task_definition" "main" {
       ]
 
       environment = [
-        { name = "DB_SERVER", value = aws_db_instance.main.address },
-        { name = "DB_NAME", value = aws_db_instance.main.db_name },
-        { name = "DB_USER", value = aws_db_instance.main.username },
+        { name = "DB_SERVER", value = var.db_address },
+        { name = "DB_NAME", value = var.db_name },
+        { name = "DB_USER", value = var.db_username },
         { name = "DB_PASSWD", value = var.db_password },
         { name = "PS_INSTALL_AUTO", value = "1" },
         { name = "PS_DEMO_MODE", value = "1" },
         { name = "PS_DEV_MODE", value = var.environment == "dev" ? "1" : "0" },
-        { name = "PS_DOMAIN", value = aws_lb.main.dns_name }
+        { name = "PS_DOMAIN", value = var.alb_dns_name }
       ]
 
       mountPoints = [
@@ -107,7 +107,7 @@ resource "aws_ecs_task_definition" "main" {
     }
   ])
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-task-definition"
   })
 }
@@ -121,24 +121,23 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
-    security_groups  = [aws_security_group.ecs.id]
+    subnets          = var.subnet_ids
+    security_groups  = [var.security_group_id]
     assign_public_ip = true
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.main.arn
+    target_group_arn = var.target_group_arn
     container_name   = var.project_name
     container_port   = 80
   }
 
   depends_on = [
-    aws_db_instance.main,
-    aws_lb_listener.main,
-    aws_efs_mount_target.main
+    var.alb_listener_arn,
+    var.efs_mount_targets
   ]
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-service"
   })
 }

@@ -4,16 +4,16 @@ resource "aws_efs_file_system" "main" {
   throughput_mode  = "bursting"
   encrypted        = true
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-efs"
   })
 }
 
 # EFS Mount Targets
 resource "aws_efs_mount_target" "main" {
-  for_each = toset(data.aws_subnets.default.ids)
+  for_each = toset(var.subnet_ids)
 
   file_system_id  = aws_efs_file_system.main.id
   subnet_id       = each.value
-  security_groups = [aws_security_group.efs.id]
+  security_groups = [var.security_group_id]
 }

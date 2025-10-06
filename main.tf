@@ -12,18 +12,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Data sources
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # Locals pour les tags communs
 locals {
   common_tags = {
@@ -33,106 +21,85 @@ locals {
   }
 }
 
-# Security Groups
-resource "aws_security_group" "alb" {
-  name_prefix = "${var.project_name}-alb-"
-  description = "Security group for ALB"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-alb-sg"
-  })
+# Module Networking
+module "networking" {
+  source = "./modules/networking"
 }
 
-resource "aws_security_group" "ecs" {
-  name_prefix = "${var.project_name}-ecs-"
-  description = "Security group for ECS tasks"
-  vpc_id      = data.aws_vpc.default.id
+# Module Security
+module "security" {
+  source = "./modules/security"
 
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  ingress {
-    from_port = 2049
-    to_port   = 2049
-    protocol  = "tcp"
-    self      = true
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-ecs-sg"
-  })
+  project_name = var.project_name
+  vpc_id       = module.networking.vpc_id
+  common_tags  = local.common_tags
 }
 
-resource "aws_security_group" "rds" {
-  name_prefix = "${var.project_name}-rds-"
-  description = "Security group for RDS"
-  vpc_id      = data.aws_vpc.default.id
+# Module ALB
+module "alb" {
+  source = "./modules/alb"
 
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-rds-sg"
-  })
+  project_name      = var.project_name
+  vpc_id            = module.networking.vpc_id
+  subnet_ids        = module.networking.subnet_ids
+  security_group_id = module.security.alb_security_group_id
+  common_tags       = local.common_tags
 }
 
-resource "aws_security_group" "efs" {
-  name_prefix = "${var.project_name}-efs-"
-  description = "Security group for EFS"
-  vpc_id      = data.aws_vpc.default.id
+# Module EFS
+module "efs" {
+  source = "./modules/efs"
 
-  ingress {
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-  }
+  project_name      = var.project_name
+  subnet_ids        = module.networking.subnet_ids
+  security_group_id = module.security.efs_security_group_id
+  common_tags       = local.common_tags
+}
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Module RDS
+module "rds" {
+  source = "./modules/rds"
 
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-efs-sg"
-  })
+  project_name         = var.project_name
+  subnet_ids           = module.networking.subnet_ids
+  security_group_id    = module.security.rds_security_group_id
+  db_instance_class    = var.db_instance_class
+  db_allocated_storage = var.db_allocated_storage
+  db_engine_version    = var.db_engine_version
+  db_username          = var.db_username
+  db_password          = var.db_password
+  db_name              = var.db_name
+  common_tags          = local.common_tags
+}
+
+# Module ECS
+module "ecs" {
+  source = "./modules/ecs"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  aws_region          = var.aws_region
+  subnet_ids          = module.networking.subnet_ids
+  security_group_id   = module.security.ecs_security_group_id
+  target_group_arn    = module.alb.target_group_arn
+  ecs_cpu             = var.ecs_cpu
+  ecs_memory          = var.ecs_memory
+  desired_count       = var.desired_count
+  prestashop_image    = var.prestashop_image
+  log_retention_days  = var.log_retention_days
+  efs_id              = module.efs.efs_id
+  db_address          = module.rds.db_instance_address
+  db_name             = module.rds.db_instance_name
+  db_username         = module.rds.db_instance_username
+  db_password         = var.db_password
+  alb_dns_name        = module.alb.alb_dns_name
+  alb_listener_arn    = module.alb.listener_arn
+  efs_mount_targets   = module.efs
+  common_tags         = local.common_tags
+
+  depends_on = [
+    module.rds,
+    module.alb,
+    module.efs
+  ]
 }
