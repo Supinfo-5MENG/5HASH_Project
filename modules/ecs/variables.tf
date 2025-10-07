@@ -74,12 +74,6 @@ variable "db_username" {
   sensitive   = true
 }
 
-variable "db_password" {
-  description = "Mot de passe de la base de données"
-  type        = string
-  sensitive   = true
-}
-
 variable "alb_dns_name" {
   description = "DNS name de l'ALB"
   type        = string
@@ -98,4 +92,19 @@ variable "efs_mount_targets" {
 variable "common_tags" {
   description = "Tags communs à appliquer"
   type        = map(string)
+}
+
+variable "db_password_secret_arn" {
+  description = "ARN du secret pour le mot de passe de la base de données"
+  type        = string
+}
+
+variable "admin_credentials_secret_arn" {
+  description = "ARN du secret pour les credentials admin"
+  type        = string
+}
+
+variable "secret_arns" {
+  description = "Liste de tous les ARNs des secrets"
+  type        = list(string)
 }

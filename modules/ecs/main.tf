@@ -47,6 +47,33 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# IAM Policy pour accéder à Secrets Manager
+resource "aws_iam_policy" "secrets_access" {
+  name        = "${var.project_name}-secrets-access"
+  description = "Allow ECS tasks to access Secrets Manager"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = [
+          for arn in var.secret_arns : "${arn}*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "secrets_access" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.secrets_access.arn
+}
+
 # ECS Task Definition
 resource "aws_ecs_task_definition" "main" {
   family                   = "${var.project_name}-task"
@@ -77,15 +104,31 @@ resource "aws_ecs_task_definition" "main" {
         }
       ]
 
+      # Variables d'environnement NON sensibles uniquement
       environment = [
         { name = "DB_SERVER", value = var.db_address },
         { name = "DB_NAME", value = var.db_name },
         { name = "DB_USER", value = var.db_username },
-        { name = "DB_PASSWD", value = var.db_password },
         { name = "PS_INSTALL_AUTO", value = "1" },
         { name = "PS_DEMO_MODE", value = "1" },
         { name = "PS_DEV_MODE", value = var.environment == "dev" ? "1" : "0" },
         { name = "PS_DOMAIN", value = var.alb_dns_name }
+      ]
+
+      # Secrets depuis Secrets Manager
+      secrets = [
+        {
+          name      = "DB_PASSWD"
+          valueFrom = var.db_password_secret_arn
+        },
+        {
+          name      = "ADMIN_MAIL"
+          valueFrom = "${var.admin_credentials_secret_arn}:admin_email::"
+        },
+        {
+          name      = "ADMIN_PASSWD"
+          valueFrom = "${var.admin_credentials_secret_arn}:admin_password::"
+        }
       ]
 
       mountPoints = [

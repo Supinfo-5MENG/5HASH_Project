@@ -72,34 +72,55 @@ module "rds" {
   common_tags          = local.common_tags
 }
 
+# Module Secrets Manager
+module "secrets" {
+  source = "./modules/secrets"
+
+  project_name   = var.project_name
+  environment    = var.environment
+  db_username    = var.db_username
+  db_password    = var.db_password
+  db_address     = module.rds.db_instance_address
+  db_port        = module.rds.db_instance_port
+  db_name        = module.rds.db_instance_name
+  admin_email    = var.admin_email
+  admin_password = var.admin_password
+  common_tags    = local.common_tags
+
+  depends_on = [module.rds]
+}
+
 # Module ECS
 module "ecs" {
   source = "./modules/ecs"
 
-  project_name        = var.project_name
-  environment         = var.environment
-  aws_region          = var.aws_region
-  subnet_ids          = module.networking.subnet_ids
-  security_group_id   = module.security.ecs_security_group_id
-  target_group_arn    = module.alb.target_group_arn
-  ecs_cpu             = var.ecs_cpu
-  ecs_memory          = var.ecs_memory
-  desired_count       = var.desired_count
-  prestashop_image    = var.prestashop_image
-  log_retention_days  = var.log_retention_days
-  efs_id              = module.efs.efs_id
-  db_address          = module.rds.db_instance_address
-  db_name             = module.rds.db_instance_name
-  db_username         = module.rds.db_instance_username
-  db_password         = var.db_password
-  alb_dns_name        = module.alb.alb_dns_name
-  alb_listener_arn    = module.alb.listener_arn
-  efs_mount_targets   = module.efs
-  common_tags         = local.common_tags
+  project_name                  = var.project_name
+  environment                   = var.environment
+  aws_region                    = var.aws_region
+  subnet_ids                    = module.networking.subnet_ids
+  security_group_id             = module.security.ecs_security_group_id
+  target_group_arn              = module.alb.target_group_arn
+  ecs_cpu                       = var.ecs_cpu
+  ecs_memory                    = var.ecs_memory
+  desired_count                 = var.desired_count
+  prestashop_image              = var.prestashop_image
+  log_retention_days            = var.log_retention_days
+  efs_id                        = module.efs.efs_id
+  db_address                    = module.rds.db_instance_address
+  db_name                       = module.rds.db_instance_name
+  db_username                   = module.rds.db_instance_username
+  alb_dns_name                  = module.alb.alb_dns_name
+  alb_listener_arn              = module.alb.listener_arn
+  efs_mount_targets             = module.efs
+  db_password_secret_arn        = module.secrets.db_password_secret_arn
+  admin_credentials_secret_arn  = module.secrets.admin_credentials_secret_arn
+  secret_arns                   = module.secrets.all_secret_arns
+  common_tags                   = local.common_tags
 
   depends_on = [
     module.rds,
     module.alb,
-    module.efs
+    module.efs,
+    module.secrets
   ]
 }

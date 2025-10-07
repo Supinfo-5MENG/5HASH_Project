@@ -54,6 +54,20 @@ variable "db_name" {
   default     = "prestashop"
 }
 
+# PrestaShop Admin Variables
+variable "admin_email" {
+  description = "Email de l'administrateur PrestaShop"
+  type        = string
+  default     = "admin@example.com"
+  sensitive   = true
+}
+
+variable "admin_password" {
+  description = "Mot de passe de l'administrateur PrestaShop"
+  type        = string
+  sensitive   = true
+}
+
 # ECS Variables
 variable "ecs_cpu" {
   description = "CPU pour la tâche ECS"
