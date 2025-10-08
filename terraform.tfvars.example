@@ -12,6 +12,10 @@ db_username          = "prestashop_user"
 db_password          = "VotreMotDePasseSecurise123!"
 db_name              = "prestashop"
 
+# Configuration PrestaShop Admin
+admin_email    = "admin@example.com"
+admin_password = "PrestaShopAdmin123!"
+
 # Configuration ECS
 ecs_cpu       = "512"
 ecs_memory    = "1024"

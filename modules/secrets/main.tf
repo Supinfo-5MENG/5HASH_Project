@@ -1,8 +1,7 @@
-# Secret pour le mot de passe de la base de données
 resource "aws_secretsmanager_secret" "db_password" {
   name                    = "${var.project_name}-${var.environment}-db-password"
   description             = "Database password for ${var.project_name}"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
 
   tags = merge(var.common_tags, {
     Name = "${var.project_name}-db-password"
@@ -14,11 +13,10 @@ resource "aws_secretsmanager_secret_version" "db_password" {
   secret_string = var.db_password
 }
 
-# Secret pour les credentials de l'admin PrestaShop
 resource "aws_secretsmanager_secret" "admin_credentials" {
   name                    = "${var.project_name}-${var.environment}-admin-credentials"
   description             = "Admin credentials for ${var.project_name}"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
 
   tags = merge(var.common_tags, {
     Name = "${var.project_name}-admin-credentials"
@@ -33,7 +31,6 @@ resource "aws_secretsmanager_secret_version" "admin_credentials" {
   })
 }
 
-# Secret pour toutes les informations de la base de données
 resource "aws_secretsmanager_secret" "db_config" {
   name                    = "${var.project_name}-${var.environment}-db-config"
   description             = "Database configuration for ${var.project_name}"

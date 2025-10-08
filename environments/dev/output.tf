@@ -34,7 +34,6 @@ output "ecs_service_name" {
   value       = module.ecs.ecs_service_name
 }
 
-# Secrets Manager outputs
 output "db_password_secret_arn" {
   description = "ARN of the database password secret"
   value       = module.secrets.db_password_secret_arn

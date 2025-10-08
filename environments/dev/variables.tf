@@ -16,7 +16,6 @@ variable "environment" {
   default     = "dev"
 }
 
-# RDS Variables
 variable "db_instance_class" {
   description = "Classe d'instance RDS"
   type        = string
@@ -54,7 +53,6 @@ variable "db_name" {
   default     = "prestashop"
 }
 
-# PrestaShop Admin Variables
 variable "admin_email" {
   description = "Email de l'administrateur PrestaShop"
   type        = string
@@ -68,7 +66,6 @@ variable "admin_password" {
   sensitive   = true
 }
 
-# ECS Variables
 variable "ecs_cpu" {
   description = "CPU pour la tâche ECS"
   type        = string
@@ -93,7 +90,6 @@ variable "prestashop_image" {
   default     = "prestashop/prestashop:latest"
 }
 
-# Logs
 variable "log_retention_days" {
   description = "Rétention des logs en jours"
   type        = number

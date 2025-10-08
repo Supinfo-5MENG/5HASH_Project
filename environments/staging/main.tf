@@ -1,3 +1,4 @@
+
 terraform {
   required_version = ">= 1.0"
   required_providers {
@@ -12,7 +13,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Locals pour les tags communs
 locals {
   common_tags = {
     Project     = var.project_name
@@ -21,23 +21,20 @@ locals {
   }
 }
 
-# Module Networking
 module "networking" {
-  source = "./modules/networking"
+  source = "../../modules/networking"
 }
 
-# Module Security
 module "security" {
-  source = "./modules/security"
+  source = "../../modules/security"
 
   project_name = var.project_name
   vpc_id       = module.networking.vpc_id
   common_tags  = local.common_tags
 }
 
-# Module ALB
 module "alb" {
-  source = "./modules/alb"
+  source = "../../modules/alb"
 
   project_name      = var.project_name
   vpc_id            = module.networking.vpc_id
@@ -46,9 +43,8 @@ module "alb" {
   common_tags       = local.common_tags
 }
 
-# Module EFS
 module "efs" {
-  source = "./modules/efs"
+  source = "../../modules/efs"
 
   project_name      = var.project_name
   subnet_ids        = module.networking.subnet_ids
@@ -56,9 +52,8 @@ module "efs" {
   common_tags       = local.common_tags
 }
 
-# Module RDS
 module "rds" {
-  source = "./modules/rds"
+  source = "../../modules/rds"
 
   project_name         = var.project_name
   subnet_ids           = module.networking.subnet_ids
@@ -72,9 +67,8 @@ module "rds" {
   common_tags          = local.common_tags
 }
 
-# Module Secrets Manager
 module "secrets" {
-  source = "./modules/secrets"
+  source = "../../modules/secrets"
 
   project_name   = var.project_name
   environment    = var.environment
@@ -90,9 +84,8 @@ module "secrets" {
   depends_on = [module.rds]
 }
 
-# Module ECS
 module "ecs" {
-  source = "./modules/ecs"
+  source = "../../modules/ecs"
 
   project_name                  = var.project_name
   environment                   = var.environment

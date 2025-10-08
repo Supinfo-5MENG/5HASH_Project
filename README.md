@@ -215,12 +215,11 @@ nano terraform.tfvars
 ### Exemple de configuration `terraform.tfvars`
 
 ```hcl
-# Région AWS
 aws_region = "eu-west-3"
 
 # Informations projet
 project_name = "prestashop"
-environment  = "production"
+environment  = "dev"
 
 # Configuration RDS
 db_instance_class    = "db.t3.micro"
@@ -230,9 +229,9 @@ db_username          = "prestashop_user"
 db_password          = "VotreMotDePasseSecurise123!"
 db_name              = "prestashop"
 
-# Configuration Admin PrestaShop
-admin_email    = "admin@votredomaine.com"
-admin_password = "AdminSecurePassword456!"
+# Configuration PrestaShop Admin
+admin_email    = "admin@example.com"
+admin_password = "PrestaShopAdmin123!"
 
 # Configuration ECS
 ecs_cpu       = "512"
