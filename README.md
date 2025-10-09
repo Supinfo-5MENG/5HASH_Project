@@ -11,8 +11,6 @@
 - [Gestion des secrets](#gestion-des-secrets)
 - [Scaling et haute disponibilité](#scaling-et-haute-disponibilité)
 - [Monitoring et logs](#monitoring-et-logs)
-- [Benchmark et estimation des coûts](#benchmark-et-estimation-des-coûts)
-- [Maintenance](#maintenance)
 - [Environnements multiples](#environnements-multiples)
 - [Troubleshooting](#troubleshooting)
 
@@ -680,43 +678,6 @@ Facteur de sécurité recommandé = 1.5
 | Moyen (1000-5000 users/h) | 200 | 2-3 | 512 | 1024 | db.t3.small |
 | Élevé (5000-20000 users/h) | 800 | 6-8 | 1024 | 2048 | db.t3.medium |
 | Très élevé (> 20000 users/h) | 2000+ | 15+ | 1024 | 2048 | db.r5.large |
-
-### Estimation des coûts mensuels (région eu-west-3)
-
-#### Configuration par défaut (dev/staging)
-
-```
-Composant                    Quantité    Prix unitaire    Total
-─────────────────────────────────────────────────────────────────
-ECS Fargate (512 CPU, 1GB)   2 tâches    ~25 USD/tâche    50 USD
-Application Load Balancer    1           ~22 USD          22 USD
-RDS db.t3.micro             1           ~18 USD          18 USD
-EFS Storage                 10 GB       0.30 USD/GB      3 USD
-EFS Requests                1M req      0.01 USD/1k      10 USD
-Secrets Manager             3 secrets   0.40 USD/secret  1.20 USD
-CloudWatch Logs             5 GB        0.50 USD/GB      2.50 USD
-Data Transfer (out)         20 GB       0.09 USD/GB      1.80 USD
-─────────────────────────────────────────────────────────────────
-TOTAL MENSUEL                                            ~108 USD
-```
-
-#### Configuration production (haute disponibilité)
-
-```
-Composant                    Quantité    Prix unitaire    Total
-─────────────────────────────────────────────────────────────────
-ECS Fargate (1024 CPU, 2GB)  4 tâches    ~50 USD/tâche    200 USD
-Application Load Balancer    1           ~22 USD          22 USD
-RDS db.t3.medium            1           ~74 USD          74 USD
-EFS Storage                 50 GB       0.30 USD/GB      15 USD
-EFS Requests                5M req      0.01 USD/1k      50 USD
-Secrets Manager             3 secrets   0.40 USD/secret  1.20 USD
-CloudWatch Logs             20 GB       0.50 USD/GB      10 USD
-Data Transfer (out)         100 GB      0.09 USD/GB      9 USD
-Backup Storage              100 GB      0.095 USD/GB     9.50 USD
-─────────────────────────────────────────────────────────────────
-TOTAL MENSUEL                                            ~391 USD
-```
 
 ---
 
